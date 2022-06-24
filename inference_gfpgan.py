@@ -5,9 +5,8 @@ import numpy as np
 import os
 import torch
 from basicsr.utils import imwrite
+
 from gfpgan import GFPGANer
-import requests
-model_url = "https://prabhukiran.s3.ap-south-1.amazonaws.com/GFPGANv1.3.pth"
 
 
 def main():
@@ -95,18 +94,18 @@ def main():
         raise ValueError(f'Wrong model version {args.version}.')
 
     # determine model paths
-    # model_path = "https://prabhukiran.s3.ap-south-1.amazonaws.com/GFPGANv1.3.pth"
-    # if not os.path.isfile(model_path):
-    #     model_path = os.path.join('realesrgan/weights', f'{model_name}.pth')
-    # if not os.path.isfile(model_path):
-    #     raise ValueError(f'Model {model_name} does not exist.')
+    model_path = os.path.join('experiments/pretrained_models', model_name + '.pth')
+    if not os.path.isfile(model_path):
+        model_path = os.path.join('realesrgan/weights', model_name + '.pth')
+    if not os.path.isfile(model_path):
+        raise ValueError(f'Model {model_name} does not exist.')
 
     restorer = GFPGANer(
-        model_path='https://prabhukiran.s3.ap-south-1.amazonaws.com/GFPGANv1.3.pth',
+        model_path=model_path,
         upscale=args.upscale,
-        arch='clean',
-        channel_multiplier=2,
-        bg_upsampler=None)
+        arch=arch,
+        channel_multiplier=channel_multiplier,
+        bg_upsampler=bg_upsampler)
 
     # ------------------------ restore ------------------------
     for img_path in img_list:
@@ -138,7 +137,11 @@ def main():
 
         # save restored img
         if restored_img is not None:
-            extension = ext[1:] if args.ext == 'auto' else args.ext
+            if args.ext == 'auto':
+                extension = ext[1:]
+            else:
+                extension = args.ext
+
             if args.suffix is not None:
                 save_restore_path = os.path.join(args.output, 'restored_imgs', f'{basename}_{args.suffix}.{extension}')
             else:
